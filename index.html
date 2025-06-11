@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visitor Logger</title>
+    <script>
+        function getDeviceInfo() {
+            const userAgent = navigator.userAgent;
+            let device = "Unknown Device";
+
+            if (/android/i.test(userAgent)) {
+                device = "Android Phone";
+            } else if (/iPad|iPhone|iPod/.test(userAgent)) {
+                device = "iOS Device";
+            } else if (/Windows/.test(userAgent)) {
+                device = "Windows PC";
+            } else if (/Mac/.test(userAgent)) {
+                device = "Mac PC";
+            }
+
+            let browser = "Unknown Browser";
+            if (userAgent.includes("Chrome")) browser = "Google Chrome";
+            else if (userAgent.includes("Firefox")) browser = "Mozilla Firefox";
+            else if (userAgent.includes("Safari")) browser = "Apple Safari";
+            else if (userAgent.includes("Edge")) browser = "Microsoft Edge";
+
+            let os = "Unknown OS";
+            if (userAgent.includes("Win")) os = "Windows";
+            else if (userAgent.includes("Mac")) os = "MacOS";
+            else if (/Android/.test(userAgent)) os = "Android";
+            else if (/iOS|iPhone|iPad|iPod/.test(userAgent)) os = "iOS";
+
+            return { device, browser, os };
+        }
+
+        function logVisitor() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        const { device, browser, os } = getDeviceInfo();
+
+                        fetch("http://localhost:3000/log", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({ latitude, longitude, device, browser, os })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log("Logged:", data);
+                            document.getElementById("output").innerText = JSON.stringify(data, null, 2);
+                        })
+                        .catch(error => console.error("Error logging visitor:", error));
+                    },
+                    (error) => {
+                        console.error("Geolocation error:", error);
+                        document.getElementById("output").innerText = "Location permission denied.";
+                    }
+                );
+            } else {
+                console.log("Geolocation is not available");
+                document.getElementById("output").innerText = "Geolocation is not supported by this browser.";
+            }
+        }
+    </script>
+</head>
+<body onload="logVisitor()">
+    <h1>Logging Visitor Info...</h1>
+    <pre id="output">Waiting for data...</pre>
+</body>
+</html>
