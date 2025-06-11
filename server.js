@@ -4,12 +4,12 @@ const cors = require("cors");
 
 const app = express();
 const PORT = 3000;
-const API_KEY = "5215a102a4bebc"; // Your ipinfo.io API key
+const API_KEY = "5215a102a4bebc";
 
-app.use(cors()); // Enable CORS for frontend requests
-app.use(express.json()); // Enable JSON parsing
+app.use(cors()); 
+app.use(express.json());
 
-// Connect to SQLite database
+
 const db = new sqlite3.Database("./visitors.db", (err) => {
     if (err) {
         console.error("Database connection error:", err.message);
@@ -18,7 +18,7 @@ const db = new sqlite3.Database("./visitors.db", (err) => {
     }
 });
 
-// Create visitors table if not exists
+
 db.run(`
     CREATE TABLE IF NOT EXISTS visitors (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,7 +36,7 @@ db.run(`
     )
 `);
 
-// **NEW: Add a homepage route**
+
 app.get("/", (req, res) => {
     res.send(`
         <h1>Welcome to the IP Tracker API</h1>
@@ -44,26 +44,26 @@ app.get("/", (req, res) => {
     `);
 });
 
-// API to log visitor details
+
 app.post("/log", async (req, res) => {
     try {
         const { latitude, longitude, device, browser, os } = req.body;
 
-        // Get public IP
+       
         const ipResponse = await fetch("https://api64.ipify.org?format=json");
         const ipData = await ipResponse.json();
         const realIp = ipData.ip;
 
         console.log(`Fetching location for IP: ${realIp}`);
 
-        // Get location details from ipinfo.io
+       
         const locationResponse = await fetch(`https://ipinfo.io/${realIp}/json?token=${API_KEY}`);
         const data = await locationResponse.json();
 
         if (locationResponse.ok) {
             console.log("Visitor Info:", data);
 
-            // Store in database
+          
             db.run(
                 `INSERT INTO visitors (ip, country, region, city, isp, latitude, longitude, device, browser, os) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -73,7 +73,7 @@ app.post("/log", async (req, res) => {
                     data.region,
                     data.city,
                     data.org,
-                    latitude || data.loc.split(",")[0], // Use frontend GPS if available
+                    latitude || data.loc.split(",")[0], 
                     longitude || data.loc.split(",")[1],
                     device,
                     browser,
@@ -108,5 +108,5 @@ app.post("/log", async (req, res) => {
     }
 });
 
-// Start the server
+
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
